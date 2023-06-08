@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model organization {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String       @db.VarChar(255)
+  user_id    String       @db.Uuid
+  created_at DateTime     @default(now()) @db.Timestamp(6)
+  updated_at DateTime     @default(now()) @db.Timestamp(6)
+  user       user         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurant restaurant[]
+}
+
+model preference {
+  id                  String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dietary_restriction String?     @db.VarChar(255)
+  favorite_dish       String?     @db.VarChar(255)
+  reservation_id      String      @db.Uuid
+  created_at          DateTime    @default(now()) @db.Timestamp(6)
+  updated_at          DateTime    @default(now()) @db.Timestamp(6)
+  reservation         reservation @relation(fields: [reservation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model reservation {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  date             DateTime     @db.Timestamp(6)
+  time             DateTime     @db.Timestamp(6)
+  number_of_guests Int
+  customer_id      String       @db.Uuid
+  table_id         String       @db.Uuid
+  created_at       DateTime     @default(now()) @db.Timestamp(6)
+  updated_at       DateTime     @default(now()) @db.Timestamp(6)
+  preference       preference[]
+  user             user         @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  table            table        @relation(fields: [table_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model restaurant {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String       @db.VarChar(255)
+  organization_id String       @db.Uuid
+  created_at      DateTime     @default(now()) @db.Timestamp(6)
+  updated_at      DateTime     @default(now()) @db.Timestamp(6)
+  organization    organization @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  table           table[]
+}
+
+model table {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  capacity      Int
+  availability  Boolean
+  restaurant_id String        @db.Uuid
+  created_at    DateTime      @default(now()) @db.Timestamp(6)
+  updated_at    DateTime      @default(now()) @db.Timestamp(6)
+  reservation   reservation[]
+  restaurant    restaurant    @relation(fields: [restaurant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String         @unique @db.VarChar(255)
+  firstName    String?        @db.VarChar(255)
+  lastName     String?        @db.VarChar(255)
+  roq_user_id  String         @db.VarChar(255)
+  tenant_id    String         @db.VarChar(255)
+  created_at   DateTime       @default(now()) @db.Timestamp(6)
+  updated_at   DateTime       @default(now()) @db.Timestamp(6)
+  organization organization[]
+  reservation  reservation[]
+}
